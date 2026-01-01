@@ -44,7 +44,7 @@ const VideoList = () => {
     queryKey: ["videos"],
     queryFn: async () => {
       const { data } = await API.get<Video[]>("/videos");
-      return data;
+      return Array.isArray(data) ? data : [];
     },
   });
 
@@ -87,6 +87,7 @@ const VideoList = () => {
   };
 
   useEffect(() => {
+    if (!Array.isArray(videos)) return;
     videos.forEach((video) => {
       if (video.status === "processing") {
         const eventName = `video-progress-${video._id}`;
@@ -119,78 +120,79 @@ const VideoList = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {videos.map((video) => (
-        <Card key={video._id} className="flex flex-col relative group">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div className="flex flex-col">
-                <CardTitle className="truncate" title={video.title}>
-                  {video.title}
-                </CardTitle>
-                {video.organization && (
-                  <span className="text-xs text-muted-foreground mt-1">
-                    {video.organization.name}
-                  </span>
-                )}
-              </div>
-              <Badge
-                variant={
-                  video.status === "completed"
-                    ? "default"
-                    : video.status === "processing"
-                    ? "secondary"
-                    : "destructive"
-                }
-              >
-                {video.status}
-              </Badge>
-            </div>
-            <CardDescription className="line-clamp-2">
-              {video.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grow">
-            {video.status === "processing" && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Processing</span>
-                  <span>{video.progress || 0}%</span>
+      {Array.isArray(videos) &&
+        videos.map((video) => (
+          <Card key={video._id} className="flex flex-col relative group">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col">
+                  <CardTitle className="truncate" title={video.title}>
+                    {video.title}
+                  </CardTitle>
+                  {video.organization && (
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {video.organization.name}
+                    </span>
+                  )}
                 </div>
-                <Progress value={video.progress || 0} />
-              </div>
-            )}
-            {video.sensitivity && video.status === "completed" && (
-              <div className="mt-2">
                 <Badge
                   variant={
-                    video.sensitivity === "safe" ? "outline" : "destructive"
+                    video.status === "completed"
+                      ? "default"
+                      : video.status === "processing"
+                      ? "secondary"
+                      : "destructive"
                   }
                 >
-                  Sensitivity: {video.sensitivity}
+                  {video.status}
                 </Badge>
               </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex justify-between gap-2">
-            {video.status === "completed" && (
-              <Button asChild className="flex-1">
-                <Link to={`/video/${video._id}`}>Watch Video</Link>
-              </Button>
-            )}
-            {canDelete(video) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => handleDelete(video._id)}
-                title="Delete Video"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </CardFooter>
-        </Card>
-      ))}
+              <CardDescription className="line-clamp-2">
+                {video.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grow">
+              {video.status === "processing" && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Processing</span>
+                    <span>{video.progress || 0}%</span>
+                  </div>
+                  <Progress value={video.progress || 0} />
+                </div>
+              )}
+              {video.sensitivity && video.status === "completed" && (
+                <div className="mt-2">
+                  <Badge
+                    variant={
+                      video.sensitivity === "safe" ? "outline" : "destructive"
+                    }
+                  >
+                    Sensitivity: {video.sensitivity}
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex justify-between gap-2">
+              {video.status === "completed" && (
+                <Button asChild className="flex-1">
+                  <Link to={`/video/${video._id}`}>Watch Video</Link>
+                </Button>
+              )}
+              {canDelete(video) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => handleDelete(video._id)}
+                  title="Delete Video"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        ))}
       {videos.length === 0 && (
         <div className="col-span-full text-center py-10 text-muted-foreground">
           No videos found. Upload one to get started!
